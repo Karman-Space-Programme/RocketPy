@@ -1653,3 +1653,220 @@ class HybridMotor(Motor):
 
     def allInfo(self):
         pass
+    
+class LiquidMotor(Motor):
+    # This class is incmplete
+    # TODO: get inertia formulas and fuel variables from propulsion/systems
+    def __init__(
+        self,
+        thrustSource,
+        oxidizerTankRadius,
+        oxidizerTankHeight,
+        oxidizerInitialPressure,
+        oxidizerDensity,
+        oxidizerMolarMass,
+        oxidizerInitialVolume,
+        fuelTankHeight,
+        fuelInitialPressure,
+        fuelDensity,
+        fuelMolarMass,
+        fuelInitialVolume,
+        nitrogenTankHeight,
+        nitrogenInitialPressure,
+        nitrogenDensity,
+        nitrogenMolarMass,
+        nitrogenInitialVolume,
+        injectorArea,
+        nozzleRadius=0.0335,
+        throatRadius=0.0114,
+        reshapeThrustCurve=False,
+        interpolationMethod="linear",
+    ):
+        """Initialize Motor class, process thrust curve and geometrical
+        parameters and store results.
+
+        Parameters
+        ----------
+        thrustSource : int, float, callable, string, array
+            Motor's thrust curve. Can be given as an int or float, in which
+            case the thrust will be considered constant in time. It can
+            also be given as a callable function, whose argument is time in
+            seconds and returns the thrust supplied by the motor in the
+            instant. If a string is given, it must point to a .csv or .eng file.
+            The .csv file shall contain no headers and the first column must
+            specify time in seconds, while the second column specifies thrust.
+            Arrays may also be specified, following rules set by the class
+            Function. See help(Function). Thrust units are Newtons.
+        burnOut : int, float
+            Motor burn out time in seconds.
+        oxidizerTankRadius :
+            Oxidizer Tank inner radius.
+        oxidizerTankHeight :
+            Oxidizer Tank Height.
+        oxidizerInitialPressure :
+            Initial pressure of the oxidizer tank, could be equal to the pressure of the source cylinder in atm.
+        oxidizerDensity :
+            Oxidizer theoretical density in liquid state, for N2O is equal to 1.98 (Kg/m^3).
+        oxidizerMolarMass :
+            Oxidizer molar mass, for the N2O is equal to 44.01 (g/mol).
+        oxidizerInitialVolume :
+            Initial volume of oxidizer charged in the tank.
+        injectorArea :
+            injector outlet area.
+        nozzleRadius : int, float, optional
+            Motor's nozzle outlet radius in meters. Used to calculate Kn curve.
+            Optional if the Kn curve is not interesting. Its value does not impact
+            trajectory simulation.
+        throatRadius : int, float, optional
+            Motor's nozzle throat radius in meters. Its value has very low
+            impact in trajectory simulation, only useful to analyze
+            dynamic instabilities, therefore it is optional.
+        reshapeThrustCurve : boolean, tuple, optional
+            If False, the original thrust curve supplied is not altered. If a
+            tuple is given, whose first parameter is a new burn out time and
+            whose second parameter is a new total impulse in Ns, the thrust
+            curve is reshaped to match the new specifications. May be useful
+            for motors whose thrust curve shape is expected to remain similar
+            in case the impulse and burn time varies slightly. Default is
+            False.
+        interpolationMethod : string, optional
+            Method of interpolation to be used in case thrust curve is given
+            by data set in .csv or .eng, or as an array. Options are 'spline'
+            'akima' and 'linear'. Default is "linear".
+
+        Returns
+        -------
+        None
+        """
+        raise Exception("Method not implemented")
+        super().__init__(
+            thrustSource,
+            nozzleRadius,
+            throatRadius,
+            reshapeThrustCurve,
+            interpolationMethod,
+        )
+
+        # Define motor attributes
+        # Nozzle parameters
+        self.oxidizerTankRadius = oxidizerTankRadius
+        self.oxidizerTankHeight = oxidizerTankHeight
+        self.oxidizerInitialPressure = oxidizerInitialPressure
+        self.oxidizerDensity = oxidizerDensity
+        self.oxidizerMolarMass = oxidizerMolarMass
+        self.oxidizerInitialVolume = oxidizerInitialVolume
+        self.injectorArea = injectorArea
+
+        # Other quantities that will be computed
+        self.zCM = None
+        self.oxidizerInitialMass = None
+        self.Kn = None
+
+        # Compute uncalculated quantities
+        # Grains initial geometrical parameters
+        self.propellantInitialMass = (
+            self.oxidizerInitialVolume * self.oxidizerDensity
+        )
+        # Dynamic quantities
+        self.evaluateMassDot()
+        self.evaluateMass()
+        self.evaluateGeometry()
+        self.evaluateInertia()
+        self.evaluateCenterOfMass()
+
+    @property
+    def exhaustVelocity(self):
+        """Calculates and returns exhaust velocity by assuming it
+        as a constant. The formula used is total impulse/propellant
+        initial mass. The value is also stored in
+        self.exhaustVelocity.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self.exhaustVelocity : float
+            Constant gas exhaust velocity of the motor.
+        """
+        return self.totalImpulse / self.propellantInitialMass
+
+    def evaluateMassDot(self):
+        """Calculates and returns the time derivative of propellant
+        mass by assuming constant exhaust velocity. The formula used
+        is the opposite of thrust divided by exhaust velocity. The
+        result is a function of time, object of the Function class,
+        which is stored in self.massDot.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        self.massDot : Function
+            Time derivative of total propellant mass as a function
+            of time.
+        """
+        
+        raise Exception("Method not implemented")
+    
+        # TODO: get fuel variables from propulsion/systems
+
+    def evaluateCenterOfMass(self):
+        """Calculates and returns the time derivative of motor center of mass.
+        The formulas used are the Bernoulli equation, law of the ideal gases and Boyle's law.
+        The result is a function of time, object of the Function class, which is stored in self.zCM.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        zCM : Function
+            Position of the center of mass as a function
+            of time.
+        """
+        raise Exception("Method not implemented")
+
+        self.zCM = 0
+
+        return self.zCM
+
+
+
+
+    def evaluateInertia(self):
+        """Calculates propellant inertia I, relative to directions
+        perpendicular to the rocket body axis and its time derivative
+        as a function of time. Also calculates propellant inertia Z,
+        relative to the axial direction, and its time derivative as a
+        function of time. Products of inertia are assumed null due to
+        symmetry. The four functions are stored as an object of the
+        Function class.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        list of Functions
+            The first argument is the Function representing inertia I,
+            while the second argument is the Function representing
+            inertia Z.
+        """
+        
+        raise Exception("Method not implemented")
+        
+        # TODO: get formulas from propulsion/systems and integration
+        inertiaI = None
+        inertiaZ = None
+    
+
+        return [self.inertiaI, self.inertiaZ]
+
+    def allInfo(self):
+        pass    
